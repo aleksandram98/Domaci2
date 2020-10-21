@@ -25,7 +25,7 @@
 
 
     <!-- Radio button grupa za odabir tipa HTTP zahteva koji želimo da pošaljemo -->
-    
+
         <div id="http_zahtev">
             <input type="radio" name="http_zahtev" id="get" value="get">
             <label for="get">GET</label>
@@ -39,7 +39,7 @@
 
         <!-- Div sekcija za prikaz odgovora za GET zahtev sa servera
         HTML tag <pre></pre> nam omogućava da ispisuje prethodno formatiran tekst, što nam je potrebno za pretty prikaz JSON-a -->
-        
+
         <pre id="get_odgovor"></pre>
 
         <!-- Div sekcija za POST formu za novosti -->
@@ -74,15 +74,14 @@
         <!-- Div sekcija za PUT formu za kategorije -->
 
         <div id="kategorije_put">
-            <input type="text" name="id_kategorije" id="id_kategorije">
-
+            <input type="text" name="id_kategorije" id="id_kategorije" placeholder="Unesite id kategorije koju zelite da promenite">
             <input type="text" name="kategorija_naziv_put" id="kategorija_naziv_put" placeholder="Unesite novi naziv kategorije">
         </div>
 
         <!-- Div sekcija za PUT formu za novosti -->
 
         <div id="novosti_put">
-            <input type="text" name="id_novosti" id="id_novosti">
+            <input type="text" name="id_novosti" id="id_novosti" placeholder="Unesite id novosti koje zelite da promenite">
             <input type="text" name="naslov_novosti_put" placeholder="Unesite novi naslov novosti">
             <br>
             <textarea name="tekst_novosti_put" id="tekst_novosti_put" cols="30" rows="10" placeholder="Unesite novi tekst novosti"></textarea>
@@ -95,7 +94,7 @@
                 <option value="3">3</option>
                 <option value="4">4</option>
             </select>
-            
+
         </div>
 
         <!-- Div sekcija za ispisivanje grešaka u slučaju pogrešne selekcije radio button-a -->
@@ -109,7 +108,7 @@
             <button type="button">Posalji zahtev</button>
         </div>
     </form>
-    
+
 </body>
 </html>
 
@@ -171,7 +170,7 @@
                         document.getElementById(nizBlokova[1]).style.display="block";
                     }
                 }
-                
+
                 break;
             case "put":
             // u slučaju da odaberemo put, sakrićemo sve prethodno prikazane div-ove
@@ -221,6 +220,24 @@
 
     }
 
+    //prosirivanje JQUERY-a
+    jQuery.each(["put", "delete"], function(i, method) {
+        jQuery[method] = function(url, data, callback, type) {
+            if(jQuery.isFunction(data)) {
+                type = type || callback;
+                callback = data;
+                data = undefined;
+            }
+            //koristimo $.ajax() za formatiranje resenja !!!!
+            return jQuery.ajax ({
+                url: url,
+                type: method,
+                dataType: type,
+                data: data,
+                success: callback
+            });
+        };
+    });
 
     //funkcija posaljiZahtev obrađuje pomoću AJAX-a zahteve koje šaljemo ka serveru
     function posaljiZahtev(){
@@ -283,14 +300,61 @@
                         $.post("http://localhost:8080/rest/rest/kategorije", JSON.stringify(values),function(data){
                             alert("Odgovor od servera> "+data['poruka']);
                         });
-                        
+
                     }
                     break;
                 case "put":
-                    //kod za bonus poene
+                    //overajd JQUERY-A je odradjen (iznad) SA AJAXOM ZA $.PUT I $.DELETE
+                    //DOMACI ------!
+                    if(tabela == "radio_novosti") {
+                        var values2 = {
+                            "novost_id": $("input[name = id_novosti]").val()
+                        };
+                        var values = {
+                            "naslov": $("input[name = naslov_novosti_put]").val(),
+                            "tekst": $("#tekst_novosti_put").val(),
+                            "kategorija_id": parseInt($("#kategorija_odabir_put").val())
+                        };
+                        console.log(values);
+                        var id_novosti = $('#id_novosti').val();
+                        $.put("http://localhost:8080/rest/rest/novosti/" + id_novosti, JSON.stringify(values),function(data){
+                            alert("Odgovor od servera> "+data['poruka']);
+                        });
+                    } else {
+                        var values2 = {
+                            "kategorija_id": $("input[name = id_kategorije]").val()
+                        };
+                        var values = {
+                            "kategorija": $("input[name = kategorija_naziv_put]").val()
+                        };
+                        console.log(values)
+                        var id_kategorije = $('#id_kategorije').val();
+                        $.put("http://localhost:8080/rest/rest/kategorije/" + id_kategorije, JSON.stringify(values),function(data){
+                            alert("Odgovor od servera> "+data['poruka']);
+                        });
+                    }
                     break;
                 case "delete":
-                    //kod za bonus poene
+                    //DOMACI ----!
+                    if(tabela == "radio_novosti") {
+                        var values = {
+                            "novost": $("input[name = brisanje]").val()
+                        }
+                        var id_novosti = $('#brisanje').val();
+                        console.log(values);
+                        $.delete("http://localhost:8080/rest/rest/novosti/" + id_novosti, JSON.stringify(values), function(data){
+                            alert("Uspesno obrisana novost")
+                        });
+                    } else {
+                        var values = {
+                            "kategorija": $("input[name = brisanje").val()
+                        }
+                        var id_kategorije = $('#brisanje').val();
+                        console.log(values);
+                        $.delete("http://localhost:8080/rest/rest/kategorije/" + id_kategorije, JSON.stringify(values), function(data){
+                            alert("Uspesno obrisana kategorija")
+                        });
+                    }
                     break;
                 default:
                     console.log("default");
